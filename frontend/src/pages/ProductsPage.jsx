@@ -30,6 +30,7 @@ export default function ProductsPage() {
         search: '',
         categoryId: '',
         status: '',
+        division: '',
         page: 1,
         limit: 10,
     });
@@ -80,6 +81,19 @@ export default function ProductsPage() {
             key: 'categoryId',
             label: 'Category',
             render: (row) => row.categoryId?.name || '—',
+        },
+        {
+            key: 'division',
+            label: 'Division',
+            render: (row) => {
+                if (row.division === 'print_shop') {
+                    return <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">🖨️ Print Shop</span>;
+                }
+                if (row.division === 'both') {
+                    return <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">🔄 Both</span>;
+                }
+                return <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">📘 Book Shop</span>;
+            },
         },
         {
             key: 'brandId',
@@ -196,6 +210,45 @@ export default function ProductsPage() {
             />
 
             <Card>
+                {/* Division Tabs */}
+                <div className="px-4 pt-3 pb-0 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setFilters((f) => ({ ...f, division: '', page: 1 }))}
+                            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all ${
+                                !filters.division
+                                    ? 'border-gray-900 text-gray-900'
+                                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                            }`}
+                        >
+                            All Products
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFilters((f) => ({ ...f, division: 'book_shop', page: 1 }))}
+                            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${
+                                filters.division === 'book_shop'
+                                    ? 'border-emerald-600 text-emerald-700'
+                                    : 'border-transparent text-gray-500 hover:text-emerald-700'
+                            }`}
+                        >
+                            <span>📘 Pothmela Book Shop</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFilters((f) => ({ ...f, division: 'print_shop', page: 1 }))}
+                            className={`px-3 py-2 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${
+                                filters.division === 'print_shop'
+                                    ? 'border-blue-600 text-blue-700'
+                                    : 'border-transparent text-gray-500 hover:text-blue-700'
+                            }`}
+                        >
+                            <span>🖨️ Ink Printing Hub</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Filters */}
                 <div className="p-4 border-b border-gray-200 flex flex-wrap gap-3">
                     <div className="relative flex-1 min-w-[200px]">

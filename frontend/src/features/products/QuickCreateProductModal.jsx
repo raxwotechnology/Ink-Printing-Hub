@@ -7,6 +7,7 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import { useCreateProduct } from './useProducts';
 import { useCategories, useUoms } from './useProducts';
+import { useDivisionStore } from '../../store/divisionStore';
 
 /**
  * Quick modal for creating a product on the fly during PO/SO creation.
@@ -16,8 +17,12 @@ export default function QuickCreateProductModal({
     isOpen, onClose, onCreated,
     defaultProductType = 'finished_good', // 'raw_material' for PO, 'finished_good' for SO
 }) {
+    const { activeDivision } = useDivisionStore();
+    const defaultDivision = (activeDivision && activeDivision !== 'all') ? activeDivision : 'book_shop';
+
     const [form, setForm] = useState({
         name: '',
+        division: defaultDivision,
         productType: defaultProductType,
         categoryId: '',
         unitOfMeasure: 'pcs',
@@ -40,6 +45,7 @@ export default function QuickCreateProductModal({
         try {
             const result = await createMutation.mutateAsync({
                 name: form.name,
+                division: form.division || 'book_shop',
                 productType: form.productType,
                 categoryId: form.categoryId || undefined,
                 unitOfMeasure: form.unitOfMeasure,
@@ -77,6 +83,18 @@ export default function QuickCreateProductModal({
                 <Input label="Product Name" required placeholder="e.g., Sugar 1kg"
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+
+                <Select
+                    label="Business Division"
+                    required
+                    options={[
+                        { value: 'book_shop', label: '📘 Pothmela Book Shop' },
+                        { value: 'print_shop', label: '🖨️ Ink Printing Hub' },
+                        { value: 'both', label: '🔄 Both / Shared' },
+                    ]}
+                    value={form.division}
+                    onChange={(e) => setForm((f) => ({ ...f, division: e.target.value }))}
+                />
 
                 <div className="grid grid-cols-2 gap-3">
                     <Select label="Type"

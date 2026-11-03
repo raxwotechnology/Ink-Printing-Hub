@@ -8,6 +8,7 @@ export const productFormSchema = z.object({
     sku: z.string().max(50).optional().or(z.literal('')),
     barcode: z.string().max(50).optional().or(z.literal('')),
     productType: z.enum(['finished_good', 'raw_material', 'semi_finished', 'packaging', 'service', 'consumable']).optional(),
+    division: z.enum(['book_shop', 'print_shop', 'both']).default('book_shop'),
     canBeSold: z.boolean().optional(),
     canBePurchased: z.boolean().optional(),
     canBeManufactured: z.boolean().optional(),

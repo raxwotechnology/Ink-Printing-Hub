@@ -9,15 +9,19 @@ import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
 import { productFormSchema } from './productSchemas';
 import { useCategories, useBrands, useUoms, useCreateProduct, useUpdateProduct } from './useProducts';
+import { useDivisionStore } from '../../store/divisionStore';
 
 export default function ProductFormModal({ isOpen, onClose, product = null }) {
     const isEdit = !!product;
+    const { activeDivision } = useDivisionStore();
 
     const { data: categoriesData } = useCategories();
     const { data: brandsData } = useBrands();
     const { data: uomsData } = useUoms();
     const createProduct = useCreateProduct();
     const updateProduct = useUpdateProduct();
+
+    const initialDivision = (activeDivision && activeDivision !== 'all') ? activeDivision : 'book_shop';
 
     const {
         register,
@@ -30,6 +34,7 @@ export default function ProductFormModal({ isOpen, onClose, product = null }) {
         resolver: zodResolver(productFormSchema),
         defaultValues: {
             name: '',
+            division: initialDivision,
             categoryId: '',
             brandId: '',
             unitOfMeasure: 'pcs',
@@ -60,6 +65,7 @@ export default function ProductFormModal({ isOpen, onClose, product = null }) {
 
             reset({
                 name: product.name || '',
+                division: product.division || 'book_shop',
                 categoryId: product.categoryId?._id || product.categoryId || '',
                 brandId: product.brandId?._id || product.brandId || '',
                 unitOfMeasure: product.unitOfMeasure || 'pcs',
@@ -83,6 +89,7 @@ export default function ProductFormModal({ isOpen, onClose, product = null }) {
         } else if (isOpen && !product) {
             reset({
                 name: '',
+                division: initialDivision,
                 categoryId: '',
                 brandId: '',
                 unitOfMeasure: 'pcs',
@@ -112,6 +119,7 @@ export default function ProductFormModal({ isOpen, onClose, product = null }) {
             shortName: data.name,
             sku: data.sku || undefined,
             barcode: data.barcode || undefined,
+            division: data.division || 'book_shop',
             productType: 'finished_good',
             canBeSold: true,
             canBePurchased: true,
@@ -186,8 +194,64 @@ export default function ProductFormModal({ isOpen, onClose, product = null }) {
                 {/* 1. Basic Details */}
                 <div className="space-y-4">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 pb-1 border-b border-gray-100">
-                        1. Product Information
+                        1. Product Information & Business Division
                     </h4>
+
+                    {/* Business Division Selector */}
+                    <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-200">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                            Select Business Division *
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <label className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition text-xs font-bold ${
+                                watch('division') === 'book_shop'
+                                    ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-1 ring-emerald-500'
+                                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100'
+                            }`}>
+                                <input
+                                    type="radio"
+                                    value="book_shop"
+                                    {...register('division')}
+                                    className="text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <span>📘 Pothmela Book Shop</span>
+                            </label>
+
+                            <label className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition text-xs font-bold ${
+                                watch('division') === 'print_shop'
+                                    ? 'bg-blue-50 border-blue-500 text-blue-800 ring-1 ring-blue-500'
+                                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100'
+                            }`}>
+                                <input
+                                    type="radio"
+                                    value="print_shop"
+                                    {...register('division')}
+                                    className="text-blue-600 focus:ring-blue-500"
+                                />
+                                <span>🖨️ Ink Printing Hub</span>
+                            </label>
+
+                            <label className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition text-xs font-bold ${
+                                watch('division') === 'both'
+                                    ? 'bg-purple-50 border-purple-500 text-purple-800 ring-1 ring-purple-500'
+                                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100'
+                            }`}>
+                                <input
+                                    type="radio"
+                                    value="both"
+                                    {...register('division')}
+                                    className="text-purple-600 focus:ring-purple-500"
+                                />
+                                <span>🔄 Both / Shared</span>
+                            </label>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-2">
+                            {watch('division') === 'book_shop' && '📘 Only available for billing & inventory under Pothmela Book Shop.'}
+                            {watch('division') === 'print_shop' && '🖨️ Only available for billing & inventory under Ink Printing Hub (pvt) Ltd.'}
+                            {watch('division') === 'both' && '🔄 Shared item available across both Book Shop and Print Shop.'}
+                        </p>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
                             <Input
