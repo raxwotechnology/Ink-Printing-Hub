@@ -44,6 +44,7 @@ export const getProducts = asyncHandler(async (req, res) => {
         brandId,
         status,
         type,
+        division,
         minPrice,
         maxPrice,
         page = 1,
@@ -68,6 +69,9 @@ export const getProducts = asyncHandler(async (req, res) => {
     if (brandId) filter.brandId = brandId;
     if (status) filter.status = status;
     if (type) filter.type = type;
+    if (division && division !== 'all') {
+        filter.division = { $in: [division, 'both'] };
+    }
 
     if (minPrice || maxPrice) {
         filter.basePrice = {};

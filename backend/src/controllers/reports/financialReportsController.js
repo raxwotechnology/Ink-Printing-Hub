@@ -14,14 +14,26 @@ import { updateBillAging } from '../billController.js';
 export const getFinancialSnapshot = asyncHandler(async (req, res) => {
     await updateInvoiceAging();
     await updateBillAging();
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, division } = req.query;
     const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const end = endDate ? new Date(endDate) : new Date();
     end.setHours(23, 59, 59, 999);
 
+    const invoiceMatch = { deletedAt: null, invoiceDate: { $gte: start, $lte: end } };
+    const expenseMatch = { deletedAt: null, status: { $ne: 'cancelled' }, date: { $gte: start, $lte: end } };
+    const paidExpenseMatch = { deletedAt: null, status: 'paid', date: { $gte: start, $lte: end } };
+    const arMatch = { deletedAt: null, paymentStatus: { $in: ['unpaid', 'partially_paid', 'overdue'] } };
+
+    if (division && division !== 'all') {
+        invoiceMatch.division = division;
+        expenseMatch.division = division;
+        paidExpenseMatch.division = division;
+        arMatch.division = division;
+    }
+
     const [revenue, bills, generalExpenses, collected, paymentsPaid, generalExpensesPaid, arTotal, apTotal] = await Promise.all([
         Invoice.aggregate([
-            { $match: { deletedAt: null, invoiceDate: { $gte: start, $lte: end } } },
+            { $match: invoiceMatch },
             { $group: { _id: null, total: { $sum: '$grandTotal' } } },
         ]),
         Bill.aggregate([
@@ -29,7 +41,7 @@ export const getFinancialSnapshot = asyncHandler(async (req, res) => {
             { $group: { _id: null, total: { $sum: '$grandTotal' } } },
         ]),
         Expense.aggregate([
-            { $match: { deletedAt: null, status: { $ne: 'cancelled' }, date: { $gte: start, $lte: end } } },
+            { $match: expenseMatch },
             { $group: { _id: null, total: { $sum: '$amount' } } },
         ]),
         Payment.aggregate([
@@ -41,11 +53,11 @@ export const getFinancialSnapshot = asyncHandler(async (req, res) => {
             { $group: { _id: null, total: { $sum: '$amount' } } },
         ]),
         Expense.aggregate([
-            { $match: { deletedAt: null, status: 'paid', date: { $gte: start, $lte: end } } },
+            { $match: paidExpenseMatch },
             { $group: { _id: null, total: { $sum: '$amount' } } },
         ]),
         Invoice.aggregate([
-            { $match: { deletedAt: null, paymentStatus: { $in: ['unpaid', 'partially_paid', 'overdue'] } } },
+            { $match: arMatch },
             {
                 $group: {
                     _id: null,

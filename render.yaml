@@ -12,7 +12,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGO_URI
-        value: mongodb+srv://raxwotechnology_db_user:BIGI2njjHbzjI3eu@cluster0.oubhxca.mongodb.net/asipbook?retryWrites=true&w=majority
+        value: mongodb+srv://raxwotechnology_db_user:Cnoxy9nwCW03SBIj@cluster0.pcxscno.mongodb.net/asipbook?retryWrites=true&w=majority
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL

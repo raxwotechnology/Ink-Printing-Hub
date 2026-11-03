@@ -31,10 +31,11 @@ export const createExpense = asyncHandler(async (req, res) => {
 });
 
 export const getExpenses = asyncHandler(async (req, res) => {
-    const { category, startDate, endDate, page = 1, limit = 20 } = req.query;
+    const { category, startDate, endDate, division, page = 1, limit = 20 } = req.query;
     const filter = {};
 
     if (category) filter.category = category;
+    if (division && division !== 'all') filter.division = division;
     if (startDate || endDate) {
         filter.date = {};
         if (startDate) filter.date.$gte = new Date(startDate);

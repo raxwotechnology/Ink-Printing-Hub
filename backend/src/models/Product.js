@@ -32,6 +32,12 @@ const productSchema = new mongoose.Schema(
             enum: ['finished_good', 'raw_material', 'semi_finished', 'packaging', 'service', 'consumable'],
             default: 'finished_good',
         },
+        division: {
+            type: String,
+            enum: ['print_shop', 'book_shop', 'both'],
+            default: 'both',
+            index: true,
+        },
         canBeManufactured: { type: Boolean, default: false },
         canBePurchased: { type: Boolean, default: true },
         canBeSold: { type: Boolean, default: true },

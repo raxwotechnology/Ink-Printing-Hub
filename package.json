@@ -1,13 +1,27 @@
 {
-  "name": "wholesale-system",
+  "name": "ink-printing-hub-system",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "postinstall": "npm install --prefix backend && npm install --prefix frontend",
+    "build": "npm install --prefix frontend && npm run build --prefix frontend",
+    "vercel-build": "npm install --prefix frontend && npm run build --prefix frontend",
     "start": "concurrently \"npm start --prefix backend\" \"npm start --prefix frontend\"",
     "start:backend": "npm start --prefix backend",
-    "start:frontend": "npm start --prefix frontend",
-    "build:frontend": "npm run build --prefix frontend"
+    "start:frontend": "npm start --prefix frontend"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-async-handler": "^1.2.0",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.4.1",
+    "morgan": "^1.10.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

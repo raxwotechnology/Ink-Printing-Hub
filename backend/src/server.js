@@ -32,6 +32,7 @@ import financialReportRoutes from './routes/financialReportRoutes.js';
 import damageRoutes from './routes/damageRoutes.js';
 import supplierReturnRoutes from './routes/supplierReturnRoutes.js';
 import repairRoutes from './routes/repairRoutes.js';
+import machineRoutes from './routes/machineRoutes.js';
 import hrRoutes from './routes/hrRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
 import chequeRoutes from './routes/chequeRoutes.js';
@@ -49,7 +50,10 @@ import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 // Load environment variables
 dotenv.config();
 
-connectDB().then(() => seedDefaults());
+// Initial connect in persistent server environments
+if (!process.env.VERCEL) {
+    connectDB().then(() => seedDefaults());
+}
 
 const app = express();
 
@@ -87,10 +91,29 @@ const authLimiter = rateLimit({
 app.get('/', (req, res) => {
     res.json({
         success: true,
-        message: 'Asipbook ERP Backend API is running',
+        message: 'Ink Printing Hub ERP Backend API is running',
         health: '/api/health',
         timestamp: new Date().toISOString(),
     });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Ink Printing Hub ERP Server is healthy and running',
+        timestamp: new Date().toISOString(),
+    });
+});
+
+// Ensure database is connected for every request (essential for Serverless/Vercel)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Database connection failed: ' + err.message });
+    }
 });
 
 // API Routes
@@ -121,6 +144,7 @@ app.use('/api/financial-reports', financialReportRoutes);
 app.use('/api/damages', damageRoutes);
 app.use('/api/supplier-returns', supplierReturnRoutes);
 app.use('/api/repairs', repairRoutes);
+app.use('/api', machineRoutes);
 app.use('/api/hr', hrRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/cheques', chequeRoutes);
@@ -130,21 +154,16 @@ app.use('/api/settings', settingsRoutes);
 
 app.use('/api/reports', reportsRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Server is running',
-        timestamp: new Date().toISOString(),
-    });
-});
-
 // Error handling (must be LAST)
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 
-app.listen(PORT, () => {
-    console.log(`✓ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`✓ Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    });
+}
+
+export default app;

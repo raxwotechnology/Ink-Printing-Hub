@@ -86,12 +86,13 @@ const menuItems = [
         ],
     },
     {
-        label: 'Manufacturing',
+        label: 'Manufacturing & Print',
         id: 'production',
         icon: Factory,
         children: [
             { label: 'BOMs (Recipes)', path: '/boms' },
             { label: 'Production Orders', path: '/production-orders' },
+            { label: 'Print Shop Machines & Repairs', path: '/machines' },
         ],
     },
     {

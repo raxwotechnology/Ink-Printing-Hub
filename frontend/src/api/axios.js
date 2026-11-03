@@ -6,7 +6,7 @@ const getBaseUrl = () => {
     if (!url) {
         url = window.location.hostname === 'localhost'
             ? 'http://localhost:5005/api'
-            : 'https://clay-art.onrender.com/api';
+            : '/api';
     }
     // Clean trailing slashes
     url = url.trim().replace(/\/+$/, '');

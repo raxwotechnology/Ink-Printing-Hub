@@ -31,10 +31,13 @@ import { useCompanySettings } from '../features/settings/useSettings';
 import { settingsApi } from '../features/settings/settingsApi';
 
 import { useAuthStore } from '../store/authStore';
+import { useDivisionStore } from '../store/divisionStore';
+import DivisionSwitcher from '../components/layout/DivisionSwitcher';
 import { useMobile } from '../hooks/useMobile';
 
 export default function PosPage() {
     const { user } = useAuthStore();
+    const { activeDivision } = useDivisionStore();
     const navigate = useNavigate();
     const createOrder = useCreateSalesOrder();
     const isMobile = useMobile();
@@ -98,8 +101,8 @@ export default function PosPage() {
         queryFn: () => customersApi.list({ status: 'active', limit: 500 }),
     });
     const { data: productsData } = useQuery({
-        queryKey: ['products', 'active', 'pos'],
-        queryFn: () => productsApi.list({ status: 'active', canBeSold: true, limit: 500 }),
+        queryKey: ['products', 'active', 'pos', activeDivision],
+        queryFn: () => productsApi.list({ status: 'active', canBeSold: true, division: activeDivision, limit: 1000 }),
     });
     const { data: categoriesData } = useCategories({ isActive: 'true' });
     const { data: stockData } = useQuery({
@@ -110,7 +113,11 @@ export default function PosPage() {
 
     const warehouses = warehousesData?.data || [];
     const customers = customersData?.data || [];
-    const products = (productsData?.data || []).filter((p) => p.canBeSold !== false);
+    const products = (productsData?.data || []).filter((p) => {
+        if (p.canBeSold === false) return false;
+        if (!p.division || p.division === 'both') return true;
+        return p.division === activeDivision;
+    });
     const categories = categoriesData?.data || [];
     const stockItems = stockData?.data || [];
 
@@ -348,6 +355,7 @@ export default function PosPage() {
         const changeAmt = isCash ? (paymentInfo?.changeReturned || 0) : 0;
 
         const payload = {
+            division: activeDivision,
             customerId: finalCustomerId,
             sourceWarehouseId,
             source: 'pos',
@@ -416,6 +424,7 @@ export default function PosPage() {
                         <Button variant="outline" size="sm" onClick={() => navigate('/sales-orders')}>
                             <ArrowLeft size={14} className="mr-1" /> Back
                         </Button>
+                        <DivisionSwitcher />
                         <h1 className="font-bold text-lg flex items-center gap-2 md:hidden">
                             <ShoppingCart size={20} /> POS
                         </h1>

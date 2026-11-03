@@ -60,6 +60,7 @@ import CreditNoteDetailPage from './pages/CreditNoteDetailPage';
 import SupplierReturnDetailPage from './pages/SupplierReturnDetailPage';
 import RepairsPage from './pages/RepairsPage';
 import RepairDetailPage from './pages/RepairDetailPage';
+import MachinesPage from './pages/MachinesPage';
 import PosPage from './pages/PosPage';
 import PosSessionsPage from './pages/PosSessionsPage';
 
@@ -180,6 +181,7 @@ function App() {
         <Route path="/supplier-returns/:id" element={<SupplierReturnDetailPage />} />
         <Route path="/repairs" element={<RepairsPage />} />
         <Route path="/repairs/:id" element={<RepairDetailPage />} />
+        <Route path="/machines" element={<MachinesPage />} />
         <Route path="/employees" element={<EmployeesPage />} />
         <Route path="/employees/new" element={<EmployeeFormPage />} />
         <Route path="/employees/:id" element={<EmployeeDetailPage />} />

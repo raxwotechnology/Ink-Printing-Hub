@@ -44,6 +44,24 @@ const invoiceSchema = new mongoose.Schema({
         default: 'standard',
     },
 
+    division: {
+        type: String,
+        enum: ['print_shop', 'book_shop'],
+        default: 'book_shop',
+        index: true,
+    },
+    divisionSnapshot: {
+        name: String,
+        address: String,
+        phone: String,
+        email: String,
+        website: String,
+        taxRegistrationNumber: String,
+        receiptFooterMessage: String,
+        logoUrl: String,
+        tagline: String,
+    },
+
     // Parties
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
     customerSnapshot: {
@@ -169,8 +187,9 @@ invoiceSchema.index({ deletedAt: 1, invoiceDate: 1 });
 
 invoiceSchema.pre('save', async function () {
     if (this.isNew && !this.invoiceNumber) {
-        const seq = await getNextSequence('invoice');
-        this.invoiceNumber = `INV-${seq}`;
+        const prefix = this.division === 'print_shop' ? 'IPH' : 'PB';
+        const seq = await getNextSequence(`invoice_${this.division || 'book_shop'}`);
+        this.invoiceNumber = `${prefix}-INV-${seq}`;
     }
 
     // Line totals

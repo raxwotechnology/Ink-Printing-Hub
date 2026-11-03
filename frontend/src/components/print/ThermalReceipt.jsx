@@ -18,17 +18,28 @@ const ThermalReceipt = forwardRef(({ invoice, payments = [], companyInfo: propCo
     
     if (!invoice) return null;
 
-    // Use settings from DB, or fallback to props, or fallback to defaults
+    // Use division snapshot from invoice or settings from DB
     const s = settingsRes?.data || {};
+    const divKey = invoice.division || 'book_shop';
+    const divSettings = s.divisions?.[divKey] || {};
+    const divSnap = invoice.divisionSnapshot || {};
+
+    const defaultName = divKey === 'print_shop' ? 'Ink Printing Hub (pvt) Ltd' : 'Pothmela Book Shop';
+    const defaultTagline = divKey === 'print_shop' ? 'PREMIUM PRINTING & BRANDING' : 'BOOKSTORE & STATIONERY HUB';
+    const defaultFooter = divKey === 'print_shop' 
+        ? 'THANK YOU FOR YOUR PRINTING ORDER!\nPLEASE VISIT AGAIN.'
+        : 'THANK YOU FOR SHOPPING AT POTHMELA!\nPLEASE VISIT AGAIN.';
+
     const companyInfo = propCompanyInfo?.name ? propCompanyInfo : {
-        name: s.companyName || 'YOUR COMPANY NAME',
-        address: s.address || 'YOUR STREET, CITY',
-        phone: s.phone || '+94 11 XXX XXXX',
-        taxNumber: s.taxRegistrationNumber,
-        email: s.email,
-        website: s.website,
-        footerMessage: s.receiptFooterMessage || 'THANK YOU FOR YOUR BUSINESS!\nPLEASE VISIT AGAIN.',
-        logo: s.logoUrl || propCompanyInfo?.logo || ''
+        name: divSnap.name || divSettings.name || defaultName,
+        address: divSnap.address || divSettings.address || s.address || 'Main Street',
+        phone: divSnap.phone || divSettings.phone || s.phone || '+94 11 XXX XXXX',
+        taxNumber: divSnap.taxRegistrationNumber || divSettings.taxRegistrationNumber || s.taxRegistrationNumber,
+        email: divSnap.email || divSettings.email || s.email,
+        website: divSnap.website || divSettings.website || s.website,
+        tagline: divSnap.tagline || divSettings.tagline || defaultTagline,
+        footerMessage: divSnap.receiptFooterMessage || divSettings.receiptFooterMessage || defaultFooter,
+        logo: divSnap.logoUrl || divSettings.logoUrl || s.logoUrl || propCompanyInfo?.logo || ''
     };
 
     const customer = invoice.customerSnapshot || {};
@@ -59,6 +70,9 @@ const ThermalReceipt = forwardRef(({ invoice, payments = [], companyInfo: propCo
                     <img src={companyInfo.logo} alt="Logo" className="max-w-[130px] max-h-[70px] object-contain mx-auto mb-2 grayscale" />
                 )}
                 <h1 className="text-xl font-black mb-1 uppercase tracking-wider">{companyInfo.name}</h1>
+                {companyInfo.tagline && (
+                    <div className="text-[10px] tracking-wider uppercase font-semibold text-gray-700 mb-1">{companyInfo.tagline}</div>
+                )}
                 <div className="text-xs text-gray-800 leading-snug font-medium">
                     {companyInfo.address && <div>{companyInfo.address}</div>}
                     {companyInfo.phone && <div>TEL: {companyInfo.phone}</div>}

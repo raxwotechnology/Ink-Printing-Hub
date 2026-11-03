@@ -4,7 +4,7 @@ import Expense from '../models/Expense.js';
 import Product from '../models/Product.js';
 
 export const getProfitAndLoss = asyncHandler(async (req, res) => {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, division } = req.query;
     
     const dateFilter = {};
     if (startDate && startDate !== 'undefined') dateFilter.$gte = new Date(startDate);
@@ -13,6 +13,9 @@ export const getProfitAndLoss = asyncHandler(async (req, res) => {
     const invoiceFilter = { status: { $nin: ['draft', 'void', 'cancelled'] }, deletedAt: null };
     if (Object.keys(dateFilter).length > 0) {
         invoiceFilter.invoiceDate = { ...dateFilter };
+    }
+    if (division && division !== 'all') {
+        invoiceFilter.division = division;
     }
 
     const invoices = await Invoice.find(invoiceFilter).populate('items.productId');
@@ -39,6 +42,9 @@ export const getProfitAndLoss = asyncHandler(async (req, res) => {
     const expenseFilter = { status: { $ne: 'cancelled' }, deletedAt: null };
     if (Object.keys(dateFilter).length > 0) {
         expenseFilter.date = { ...dateFilter };
+    }
+    if (division && division !== 'all') {
+        expenseFilter.division = division;
     }
 
     const expensesAgg = await Expense.aggregate([

@@ -63,7 +63,26 @@ export const createInvoice = asyncHandler(async (req, res) => {
         finalDueDate = d;
     }
 
+    const targetDivision = rest.division || 'book_shop';
+    const settings = await CompanySettings.findOne();
+    const divConfig = settings?.divisions?.[targetDivision] || {
+        name: targetDivision === 'print_shop' ? 'Ink Printing Hub (pvt) Ltd' : 'Pothmela Book Shop',
+        address: settings?.address || '',
+        phone: settings?.phone || '',
+        email: settings?.email || '',
+        taxRegistrationNumber: settings?.taxRegistrationNumber || '',
+        receiptFooterMessage: targetDivision === 'print_shop'
+            ? 'THANK YOU FOR YOUR PRINTING ORDER!\nPLEASE VISIT AGAIN.'
+            : 'THANK YOU FOR SHOPPING AT POTHMELA!\nPLEASE VISIT AGAIN.',
+        logoUrl: settings?.divisions?.[targetDivision]?.logoUrl || settings?.logoUrl || '',
+        tagline: targetDivision === 'print_shop'
+            ? 'PREMIUM QUALITY PRINTING & BRANDING SOLUTIONS'
+            : 'YOUR TRUSTED BOOKSTORE & STATIONERY HUB',
+    };
+
     const invoice = new Invoice({
+        division: targetDivision,
+        divisionSnapshot: divConfig,
         customerId: customer._id,
         customerSnapshot: {
             name: customer.displayName,
@@ -146,7 +165,26 @@ export const generateInvoiceFromOrders = async ({
         d.setDate(d.getDate() + (customer.paymentTerms.creditDays || 0));
     }
 
+    const targetDivision = orders[0]?.division || 'book_shop';
+    const settings = await CompanySettings.findOne().session(session || null);
+    const divConfig = settings?.divisions?.[targetDivision] || {
+        name: targetDivision === 'print_shop' ? 'Ink Printing Hub (pvt) Ltd' : 'Pothmela Book Shop',
+        address: settings?.address || '',
+        phone: settings?.phone || '',
+        email: settings?.email || '',
+        taxRegistrationNumber: settings?.taxRegistrationNumber || '',
+        receiptFooterMessage: targetDivision === 'print_shop'
+            ? 'THANK YOU FOR YOUR PRINTING ORDER!\nPLEASE VISIT AGAIN.'
+            : 'THANK YOU FOR SHOPPING AT POTHMELA!\nPLEASE VISIT AGAIN.',
+        logoUrl: settings?.divisions?.[targetDivision]?.logoUrl || settings?.logoUrl || '',
+        tagline: targetDivision === 'print_shop'
+            ? 'PREMIUM QUALITY PRINTING & BRANDING SOLUTIONS'
+            : 'YOUR TRUSTED BOOKSTORE & STATIONERY HUB',
+    };
+
     const invoice = new Invoice({
+        division: targetDivision,
+        divisionSnapshot: divConfig,
         customerId: customer._id,
         customerSnapshot: {
             name: customer.displayName,
@@ -288,13 +326,16 @@ export const getInvoices = asyncHandler(async (req, res) => {
     await updateInvoiceAging();
     const {
         search, customerId, paymentStatus, status, agingBucket,
-        startDate, endDate,
+        startDate, endDate, division,
         page = 1, limit = 20,
         sortBy = 'invoiceDate', sortOrder = 'desc',
         salesOrderId
     } = req.query;
 
     const filter = {};
+    if (division && division !== 'all') {
+        filter.division = division;
+    }
     if (search) {
         filter.$or = [
             { invoiceNumber: { $regex: search, $options: 'i' } },

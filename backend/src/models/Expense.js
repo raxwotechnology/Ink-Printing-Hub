@@ -15,6 +15,15 @@ const expenseSchema = new mongoose.Schema({
 
     bankAccountId: { type: mongoose.Schema.Types.ObjectId, ref: 'BankAccount' },
 
+    division: {
+        type: String,
+        enum: ['print_shop', 'book_shop', 'general'],
+        default: 'general',
+        index: true,
+    },
+    machineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Machine' },
+    repairId: { type: mongoose.Schema.Types.ObjectId, ref: 'MachineRepair' },
+
     status: { type: String, enum: ['paid', 'pending', 'cancelled'], default: 'paid' },
 
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

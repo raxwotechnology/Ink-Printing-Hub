@@ -74,6 +74,13 @@ const salesOrderSchema = new mongoose.Schema(
             default: 'direct',
         },
 
+        division: {
+            type: String,
+            enum: ['print_shop', 'book_shop'],
+            default: 'book_shop',
+            index: true,
+        },
+
         // Parties
         customerId: {
             type: mongoose.Schema.Types.ObjectId,

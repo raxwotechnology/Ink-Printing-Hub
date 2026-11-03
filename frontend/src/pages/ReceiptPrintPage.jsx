@@ -27,14 +27,25 @@ export default function ReceiptPrintPage() {
 
     const invoice = invoiceRes?.data;
     const s = settingsRes?.data || {};
+    const divKey = invoice?.division || 'book_shop';
+    const divSettings = s.divisions?.[divKey] || {};
+    const divSnap = invoice?.divisionSnapshot || {};
+
+    const defaultName = divKey === 'print_shop' ? 'Ink Printing Hub (pvt) Ltd' : 'Pothmela Book Shop';
+    const defaultTagline = divKey === 'print_shop' ? 'PREMIUM QUALITY PRINTING & BRANDING SOLUTIONS' : 'YOUR TRUSTED BOOKSTORE & STATIONERY HUB';
+    const defaultFooter = divKey === 'print_shop'
+        ? 'THANK YOU FOR YOUR PRINTING ORDER!\nPLEASE VISIT AGAIN.'
+        : 'THANK YOU FOR SHOPPING AT POTHMELA!\nPLEASE VISIT AGAIN.';
+
     const company = {
-        name: s.companyName || 'YOUR COMPANY NAME',
-        address: s.address || '',
-        phone: s.phone || '',
-        email: s.email || '',
-        taxNumber: s.taxRegistrationNumber || '',
-        footer: s.receiptFooterMessage || 'THANK YOU FOR YOUR BUSINESS!\nPLEASE VISIT AGAIN.',
-        logo: s.logoUrl || '',
+        name: divSnap.name || divSettings.name || defaultName,
+        address: divSnap.address || divSettings.address || s.address || '',
+        phone: divSnap.phone || divSettings.phone || s.phone || '',
+        email: divSnap.email || divSettings.email || s.email || '',
+        taxNumber: divSnap.taxRegistrationNumber || divSettings.taxRegistrationNumber || s.taxRegistrationNumber || '',
+        tagline: divSnap.tagline || divSettings.tagline || defaultTagline,
+        footer: divSnap.receiptFooterMessage || divSettings.receiptFooterMessage || s.receiptFooterMessage || defaultFooter,
+        logo: divSnap.logoUrl || divSettings.logoUrl || s.logoUrl || '',
     };
 
     // Auto-print when invoice data is ready
@@ -125,6 +136,7 @@ export default function ReceiptPrintPage() {
                         </div>
                     )}
                     <div style={{ fontSize: '17px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>{company.name}</div>
+                    {company.tagline && <div style={{ fontSize: '9px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px', color: '#333' }}>{company.tagline}</div>}
                     {company.address && <div style={{ fontSize: '11px', marginTop: '2px' }}>{company.address}</div>}
                     {company.phone && <div style={{ fontSize: '11px' }}>TEL: {company.phone}</div>}
                     {company.email && <div style={{ fontSize: '11px' }}>{company.email}</div>}

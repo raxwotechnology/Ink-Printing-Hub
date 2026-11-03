@@ -19,10 +19,11 @@ export default function FinancialReportPage() {
 
     const [startDate, setStartDate] = useState(firstDay);
     const [endDate, setEndDate] = useState(lastDay);
+    const [selectedDivision, setSelectedDivision] = useState('all');
 
     const { data: reportData, isLoading } = useQuery({
-        queryKey: ['financial-reports', 'pnl', startDate, endDate],
-        queryFn: () => financialReportsApi.getProfitAndLoss({ startDate, endDate }),
+        queryKey: ['financial-reports', 'pnl', startDate, endDate, selectedDivision],
+        queryFn: () => financialReportsApi.getProfitAndLoss({ startDate, endDate, division: selectedDivision }),
         keepPreviousData: true,
     });
 
@@ -42,9 +43,37 @@ export default function FinancialReportPage() {
                 }
             />
 
-            <div className="flex gap-4 items-end mb-6 p-4 bg-white rounded-xl shadow-sm border">
-                <Input type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                <Input type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 p-4 bg-white rounded-xl shadow-sm border">
+                <div className="flex gap-4 items-end">
+                    <Input type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                    <Input type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Business Division</label>
+                    <div className="inline-flex p-1 bg-gray-100 rounded-lg border">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedDivision('all')}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition ${selectedDivision === 'all' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                            All Divisions
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedDivision('book_shop')}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition ${selectedDivision === 'book_shop' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:text-emerald-700'}`}
+                        >
+                            Pothmela Book Shop
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedDivision('print_shop')}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition ${selectedDivision === 'print_shop' ? 'bg-blue-600 text-white shadow' : 'text-gray-600 hover:text-blue-700'}`}
+                        >
+                            Ink Printing Hub
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {isLoading && !report ? (

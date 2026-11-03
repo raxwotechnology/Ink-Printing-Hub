@@ -3,6 +3,7 @@ import { LogOut, User as UserIcon, Menu } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../features/auth/authApi';
+import DivisionSwitcher from './DivisionSwitcher';
 
 export default function Header({ onToggleSidebar }) {
     const navigate = useNavigate();
@@ -41,11 +42,8 @@ export default function Header({ onToggleSidebar }) {
                 >
                     <Menu size={20} />
                 </button>
-                <div className="hidden md:block">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Workspace</p>
-                    <h1 className="text-sm font-bold text-gray-900">
-                        Main Branch
-                    </h1>
+                <div className="flex items-center gap-2">
+                    <DivisionSwitcher />
                 </div>
             </div>
 

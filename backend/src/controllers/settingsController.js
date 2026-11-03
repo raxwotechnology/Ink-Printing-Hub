@@ -28,7 +28,7 @@ export const updateCompanySettings = asyncHandler(async (req, res) => {
 
     const {
         companyName, address, phone, email, website, taxRegistrationNumber, receiptFooterMessage,
-        logoUrl, tagline, systemSubtitle
+        logoUrl, tagline, systemSubtitle, divisions
     } = req.body;
 
     if (companyName !== undefined) settings.companyName = companyName;
@@ -41,6 +41,16 @@ export const updateCompanySettings = asyncHandler(async (req, res) => {
     if (logoUrl !== undefined) settings.logoUrl = logoUrl;
     if (tagline !== undefined) settings.tagline = tagline;
     if (systemSubtitle !== undefined) settings.systemSubtitle = systemSubtitle;
+    if (divisions !== undefined) {
+        if (!settings.divisions) settings.divisions = {};
+        if (divisions.print_shop) {
+            settings.divisions.print_shop = { ...settings.divisions.print_shop, ...divisions.print_shop };
+        }
+        if (divisions.book_shop) {
+            settings.divisions.book_shop = { ...settings.divisions.book_shop, ...divisions.book_shop };
+        }
+        settings.markModified('divisions');
+    }
 
     const updatedSettings = await settings.save();
     res.status(200).json({ success: true, data: updatedSettings });
