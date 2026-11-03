@@ -24,8 +24,6 @@ const menuItems = [
         children: [
             { label: 'Customers', path: '/customers' },
             { label: 'Suppliers', path: '/suppliers' },
-            { label: 'Staff / Users', path: '/users', adminOnly: true },
-            { label: 'User Roles', path: '/roles', adminOnly: true },
             { label: 'Customer Groups', path: '/customer-groups' },
         ],
     },
@@ -37,7 +35,6 @@ const menuItems = [
             { label: 'POS Terminal', path: '/pos' },
             { label: 'POS Registers', path: '/pos-sessions' },
             { label: 'Sales Orders', path: '/sales-orders' },
-            { label: 'Wholesale Prices', path: '/wholesale-prices' },
             { label: 'Invoices', path: '/invoices' },
             { label: 'Payments Received', path: '/payments' },
             { label: 'Customer Returns', path: '/returns' },
