@@ -55,7 +55,7 @@ const countWorkingDays = async (year, month) => {
 /**
  * Get attendance summary for employee in a month
  */
-const getEmployeeMonthAttendance = async (employeeId, year, month) => {
+const getEmployeeMonthAttendance = async (employeeId, year, month, workingDays = 26) => {
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 0, 23, 59, 59);
 
@@ -95,9 +95,14 @@ const getEmployeeMonthAttendance = async (employeeId, year, month) => {
         if (l.leaveType === 'unpaid') unpaidLeaveDays += actualDays;
     });
 
+    // If no manual attendance records exist (e.g. salaried owner or staff without daily punches), assume full working days
+    const computedPresent = records.length === 0
+        ? Math.max(0, workingDays - unpaidLeaveDays)
+        : (daysPresent + halfDays * 0.5);
+
     return {
-        daysPresent: daysPresent + halfDays * 0.5,
-        daysAbsent,
+        daysPresent: computedPresent,
+        daysAbsent: records.length === 0 ? 0 : daysAbsent,
         leaveDays,
         unpaidLeaveDays,
         overtimeHours: +(overtimeMinutes / 60).toFixed(2),
@@ -141,7 +146,7 @@ export const processPayroll = asyncHandler(async (req, res) => {
         if (!emp.basicSalary || emp.basicSalary <= 0) continue; // skip if no basic salary set
 
         const [attendance, commission] = await Promise.all([
-            getEmployeeMonthAttendance(emp._id, periodYear, periodMonth),
+            getEmployeeMonthAttendance(emp._id, periodYear, periodMonth, workingDays),
             getEmployeeCommission(emp.userId, periodYear, periodMonth, emp.commissionRate || 0),
         ]);
 
@@ -294,9 +299,10 @@ export const markPayrollPaid = asyncHandler(async (req, res) => {
                 date: p.paidAt || new Date(),
                 category: 'Salary',
                 amount: +totalNetPay.toFixed(2),
-                paymentMethod: 'bank_transfer',
+                paymentMethod: req.body?.paymentMethod || 'bank_transfer',
+                division: req.body?.division || 'general',
                 reference: p.payrollNumber,
-                description: `Payroll ${p.payrollNumber} — ${p.periodMonth}/${p.periodYear} (${p.payslips.length} employees)`,
+                description: `Monthly Salary — ${p.payrollNumber} (${p.periodMonth}/${p.periodYear})`,
                 status: 'paid',
                 createdBy: req.user._id,
             });

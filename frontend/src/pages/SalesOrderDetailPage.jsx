@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, XCircle, Truck, PackageCheck, Ban, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Truck, PackageCheck, Ban, FileText, Printer } from 'lucide-react';
+import PrintableInvoice from '../components/print/PrintableInvoice';
 
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
@@ -100,6 +101,9 @@ export default function SalesOrderDetailPage() {
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" onClick={() => navigate('/sales-orders')}>
                             <ArrowLeft size={16} className="mr-1.5" /> Back
+                        </Button>
+                        <Button variant="outline" onClick={() => window.print()} className="text-amber-800 border-amber-300 hover:bg-amber-50">
+                            <FileText size={16} className="mr-1.5 text-amber-700" /> Print Quotation (A4)
                         </Button>
                         {actionButtons.map((btn) => (
                             <Button
@@ -303,6 +307,13 @@ export default function SalesOrderDetailPage() {
                 variant={action?.variant === 'danger' ? 'danger' : 'primary'}
                 loading={changeStatus.isPending}
             />
+
+            <div className="hidden print:block">
+                <PrintableInvoice
+                    invoice={order}
+                    documentType="quotation"
+                />
+            </div>
         </div>
     );
 }

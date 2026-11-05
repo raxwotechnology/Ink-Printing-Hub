@@ -63,6 +63,10 @@ export const payrollApi = {
     process: async (data) => (await api.post('/payroll/process', data)).data,
     preview: async (data) => (await api.post('/payroll/preview', data)).data,
     approve: async (id) => (await api.patch(`/payroll/${id}/approve`)).data,
-    markPaid: async (id) => (await api.patch(`/payroll/${id}/mark-paid`)).data,
+    markPaid: async (payload) => {
+        const id = typeof payload === 'object' ? payload.id : payload;
+        const data = typeof payload === 'object' ? payload.data : {};
+        return (await api.patch(`/payroll/${id}/mark-paid`, data)).data;
+    },
     getPayslip: async (payrollId, employeeId) => (await api.get(`/payroll/${payrollId}/payslip/${employeeId}`)).data,
 };

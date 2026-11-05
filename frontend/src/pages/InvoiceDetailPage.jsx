@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Ban, Printer, Receipt } from 'lucide-react';
+import { ArrowLeft, Send, Ban, Printer, Receipt, FileText } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
@@ -114,8 +114,14 @@ export default function InvoiceDetailPage() {
                         <Button variant="outline" onClick={() => navigate('/invoices')}>
                             <ArrowLeft size={16} className="mr-1.5" /> Back
                         </Button>
+                        <Button variant="primary" onClick={() => handlePrint('a4-invoice')} className="bg-slate-900 hover:bg-slate-800 text-white">
+                            <Printer size={16} className="mr-1.5" /> Print Tax Invoice (A4)
+                        </Button>
+                        <Button variant="outline" onClick={() => handlePrint('a4-quotation')} className="text-amber-800 border-amber-300 hover:bg-amber-50">
+                            <FileText size={16} className="mr-1.5 text-amber-700" /> Print Quotation (A4)
+                        </Button>
                         <Button variant="outline" onClick={() => handlePrint('thermal')} className="text-gray-700">
-                            <Receipt size={16} className="mr-1.5" /> POS Receipt
+                            <Receipt size={16} className="mr-1.5" /> POS Receipt (80mm)
                         </Button>
                         <Button variant="outline" onClick={() => window.location.href = getBluetoothPrintUrl(inv._id)} className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">
                             <Printer size={16} className="mr-1.5 text-emerald-600" /> Bluetooth Print
@@ -343,19 +349,25 @@ export default function InvoiceDetailPage() {
             />
 
             <div className="hidden print:block">
-                {printFormat === 'a4' ? (
+                {printFormat === 'a4-quotation' ? (
                     <PrintableInvoice
                         ref={printRef}
-                        companyInfo={companyInfo}
+                        invoice={inv}
+                        payments={payments}
+                        documentType="quotation"
+                    />
+                ) : printFormat === 'thermal' ? (
+                    <ThermalReceipt
+                        ref={printRef}
                         invoice={inv}
                         payments={payments}
                     />
                 ) : (
-                    <ThermalReceipt
+                    <PrintableInvoice
                         ref={printRef}
-                        companyInfo={companyInfo}
                         invoice={inv}
                         payments={payments}
+                        documentType="invoice"
                     />
                 )}
             </div>

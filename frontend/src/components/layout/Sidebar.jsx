@@ -77,6 +77,7 @@ const menuItems = [
         children: [
             { label: 'Bank Accounts', path: '/bank-accounts' },
             { label: 'Expenses', path: '/expenses' },
+            { label: 'Monthly Salaries & Payroll', path: '/payroll' },
             { label: 'Fund Transfers', path: '/fund-transfers' },
             { label: 'Cheque Registry', path: '/cheques' },
             { label: 'Credit Notes', path: '/credit-notes' },

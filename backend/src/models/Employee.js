@@ -45,6 +45,9 @@ const employeeSchema = new mongoose.Schema({
     // Employment details
     departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
     designationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Designation' },
+    designation: { type: String, trim: true },
+    department: { type: String, trim: true },
+    division: { type: String, enum: ['print_shop', 'book_shop', 'both'], default: 'both' },
     reportsToId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
 
     employmentType: {
@@ -53,7 +56,7 @@ const employeeSchema = new mongoose.Schema({
         default: 'permanent',
     },
 
-    dateOfJoining: { type: Date, required: true },
+    dateOfJoining: { type: Date, default: Date.now },
     probationEndDate: Date,
     confirmationDate: Date,
     contractEndDate: Date,
