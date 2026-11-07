@@ -5,7 +5,9 @@ export const validate = (schema) => (req, res, next) => {
         req.body = parsed; // replace with parsed (and sanitized) data
         next();
     } catch (error) {
-        const messages = error.errors?.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+        const issues = error.issues || error.errors;
+        const messages = issues?.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+            || error.message
             || 'Validation failed';
         res.status(400);
         next(new Error(messages));

@@ -22,17 +22,10 @@ import {
 export default function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
-    const { data: kpisData, isLoading } = useDashboardKpis();
+    const { data: kpisData, isLoading, isError, error, refetch } = useDashboardKpis();
     const { data: revenueData } = useRevenueChart(6);
     const { data: topProductsData } = useTopProducts({ period: 'month', limit: 5 });
     const { data: topCustomersData } = useTopCustomers({ period: 'month', limit: 5 });
-
-    console.log('Dashboard Data Check:', {
-        kpis: kpisData?.data,
-        revenue: revenueData?.data,
-        topProducts: topProductsData?.data,
-        topCustomers: topCustomersData?.data
-    });
 
     const k = kpisData?.data;
 
@@ -52,7 +45,36 @@ export default function DashboardPage() {
         return fmt(n);
     };
 
-    if (isLoading || !k) return <div className="py-16 text-center text-gray-500">Loading dashboard...</div>;
+    if (isLoading) {
+        return (
+            <div className="py-24 text-center text-gray-500 flex flex-col items-center justify-center gap-3">
+                <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm font-medium text-gray-600">Loading dashboard...</p>
+            </div>
+        );
+    }
+
+    if (isError || !k) {
+        return (
+            <div className="py-20 text-center text-gray-600 max-w-md mx-auto">
+                <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4">
+                    <AlertTriangle size={24} />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900 mb-1">Failed to Load Dashboard</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                    {error?.response?.data?.message || error?.message || 'Could not fetch dashboard metrics. Please check your backend connection or try again.'}
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                    <Button onClick={() => refetch()}>
+                        Retry
+                    </Button>
+                    <Button variant="outline" onClick={() => window.location.reload()}>
+                        Reload Page
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>

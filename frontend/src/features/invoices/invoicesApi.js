@@ -4,6 +4,7 @@ export const invoicesApi = {
     list: async (params = {}) => (await api.get('/invoices', { params })).data,
     getById: async (id) => (await api.get(`/invoices/${id}`)).data,
     create: async (data) => (await api.post('/invoices', data)).data,
+    update: async (id, data) => (await api.put(`/invoices/${id}`, data)).data,
     createFromSalesOrder: async (data) => (await api.post('/invoices/from-sales-order', data)).data,
     changeStatus: async (id, status, reason) =>
         (await api.patch(`/invoices/${id}/status`, { status, reason })).data,

@@ -39,6 +39,7 @@ export const createProductSchema = z.object({
     barcode: z.string().max(50).optional(),
     name: z.string().min(1).max(200),
     productType: z.enum(['finished_good', 'raw_material', 'semi_finished', 'packaging', 'service', 'consumable']).optional(),
+    division: z.enum(['print_shop', 'book_shop', 'both']).optional(),
     canBeManufactured: z.boolean().optional(),
     canBePurchased: z.boolean().optional(),
     canBeSold: z.boolean().optional(),

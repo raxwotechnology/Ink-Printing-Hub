@@ -3,6 +3,7 @@ import {
     createProduct,
     getProducts,
     getProductById,
+    getProductByBarcode,
     updateProduct,
     deleteProduct,
 } from '../controllers/productController.js';
@@ -18,6 +19,9 @@ router
     .route('/')
     .get(getProducts)
     .post(authorize('admin', 'manager'), validate(createProductSchema), createProduct);
+
+// Dedicated POS Barcode lookup route
+router.get('/barcode/:barcode', getProductByBarcode);
 
 router
     .route('/:id')

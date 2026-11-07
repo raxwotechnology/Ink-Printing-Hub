@@ -4,7 +4,7 @@ import axios from 'axios';
 const getBaseUrl = () => {
     let url = import.meta.env.VITE_API_URL;
     if (!url) {
-        url = window.location.hostname === 'localhost'
+        url = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://localhost:5005/api'
             : '/api';
     }
@@ -27,7 +27,18 @@ const api = axios.create({
 // Attach JWT token to every request
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
+        let token = localStorage.getItem('token');
+        if (!token) {
+            try {
+                const persisted = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+                token = persisted?.state?.token;
+                if (token) {
+                    localStorage.setItem('token', token);
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

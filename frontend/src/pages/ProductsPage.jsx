@@ -73,7 +73,14 @@ export default function ProductsPage() {
             render: (row) => (
                 <div>
                     <p className="font-medium text-gray-900">{row.name}</p>
-                    {row.sku && <p className="text-xs text-gray-500">SKU: {row.sku}</p>}
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {row.sku && <span className="text-xs text-gray-500">SKU: {row.sku}</span>}
+                        {row.barcode && (
+                            <span className="inline-flex items-center gap-1 font-mono text-[11px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                                🏷️ {row.barcode}
+                            </span>
+                        )}
+                    </div>
                 </div>
             ),
         },
@@ -255,7 +262,7 @@ export default function ProductsPage() {
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search by name, SKU, code..."
+                            placeholder="Search by name, SKU, code, barcode..."
                             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 text-sm"
                             value={filters.search}
                             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}

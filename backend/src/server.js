@@ -4,6 +4,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import authRoutes from './routes/authRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
@@ -20,6 +22,7 @@ import supplierRoutes from './routes/supplierRoutes.js';
 import purchaseOrderRoutes from './routes/purchaseOrderRoutes.js';
 import grnRoutes from './routes/grnRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
+import quotationRoutes from './routes/quotationRoutes.js';
 import billRoutes from './routes/billRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import bomRoutes from './routes/bomRoutes.js';
@@ -47,13 +50,12 @@ import { seedDefaults } from './utils/seedDefaults.js';
 import connectDB from './config/db.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
-// Load environment variables
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Initial connect in persistent server environments
-if (!process.env.VERCEL) {
-    connectDB().then(() => seedDefaults());
-}
+// Load environment variables (from backend/.env and cwd fallback)
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
 
 const app = express();
 
@@ -132,6 +134,7 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/grns', grnRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/quotations', quotationRoutes);
 app.use('/api/bills', billRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/boms', bomRoutes);
@@ -160,10 +163,23 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5005;
 
+// Establish database connection before accepting requests
 if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`✓ Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-    });
+    const startServer = async () => {
+        try {
+            await connectDB();
+            if (process.env.SEED_DEFAULTS === 'true') {
+                await seedDefaults();
+            }
+            app.listen(PORT, () => {
+                console.log(`✓ Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+            });
+        } catch (error) {
+            console.error(`✗ Failed to start server: ${error.message}`);
+            process.exit(1);
+        }
+    };
+    startServer();
 }
 
 export default app;

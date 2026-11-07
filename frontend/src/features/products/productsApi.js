@@ -10,6 +10,10 @@ export const productsApi = {
         const response = await api.get(`/products/${id}`);
         return response.data;
     },
+    getByBarcode: async (barcode, params = {}) => {
+        const response = await api.get(`/products/barcode/${encodeURIComponent(barcode)}`, { params });
+        return response.data;
+    },
     create: async (data) => {
         const response = await api.post('/products', data);
         return response.data;

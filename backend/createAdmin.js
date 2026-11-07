@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import User from './src/models/User.js';
+import connectDB from './src/config/db.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,10 +13,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const createAdmin = async () => {
     try {
-        if (!process.env.MONGO_URI) {
-            throw new Error('MONGO_URI is not defined in .env file');
-        }
-        await mongoose.connect(process.env.MONGO_URI);
+        await connectDB();
         console.log('Connected to MongoDB');
 
         let adminUser = await User.findOne({ email: 'admin@admin.com' });

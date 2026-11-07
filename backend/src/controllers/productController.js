@@ -3,6 +3,18 @@ import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 
 export const createProduct = asyncHandler(async (req, res) => {
+    // Validate barcode uniqueness if provided
+    if (req.body.barcode && req.body.barcode.trim()) {
+        const existingBarcode = await Product.findOne({
+            barcode: req.body.barcode.trim(),
+            deletedAt: null,
+        });
+        if (existingBarcode) {
+            res.status(400);
+            throw new Error(`Barcode "${req.body.barcode.trim()}" is already assigned to product "${existingBarcode.name}" (${existingBarcode.productCode})`);
+        }
+    }
+
     const product = await Product.create({
         ...req.body,
         createdBy: req.user._id,
@@ -124,6 +136,19 @@ export const updateProduct = asyncHandler(async (req, res) => {
         throw new Error('Product not found');
     }
 
+    // Validate barcode uniqueness if provided
+    if (req.body.barcode && req.body.barcode.trim()) {
+        const existingBarcode = await Product.findOne({
+            barcode: req.body.barcode.trim(),
+            _id: { $ne: req.params.id },
+            deletedAt: null,
+        });
+        if (existingBarcode) {
+            res.status(400);
+            throw new Error(`Barcode "${req.body.barcode.trim()}" is already assigned to product "${existingBarcode.name}" (${existingBarcode.productCode})`);
+        }
+    }
+
     // Update fields
     Object.assign(product, req.body);
     product.updatedBy = req.user._id;
@@ -150,6 +175,86 @@ export const updateProduct = asyncHandler(async (req, res) => {
     }
 
     res.json({ success: true, data: populated });
+});
+
+/**
+ * GET /api/products/barcode/:barcode
+ * Dedicated POS Barcode Lookup
+ */
+export const getProductByBarcode = asyncHandler(async (req, res) => {
+    const { barcode } = req.params;
+    const { warehouseId, division } = req.query;
+
+    if (!barcode || !barcode.trim()) {
+        res.status(400);
+        throw new Error('Barcode is required');
+    }
+
+    const cleanBarcode = barcode.trim();
+
+    const product = await Product.findOne({
+        barcode: cleanBarcode,
+        deletedAt: null,
+    }).populate('categoryId', 'name code').populate('brandId', 'name');
+
+    if (!product) {
+        res.status(404);
+        throw new Error(`No product found with barcode "${cleanBarcode}"`);
+    }
+
+    if (product.status !== 'active') {
+        res.status(400);
+        throw new Error(`Product "${product.name}" is ${product.status} and cannot be sold`);
+    }
+
+    if (product.salesConfig?.sellable === false || product.canBeSold === false) {
+        res.status(400);
+        throw new Error(`Product "${product.name}" is marked as not for sale`);
+    }
+
+    const targetDivision = division || 'book_shop';
+    if (product.division && product.division !== 'both' && product.division !== targetDivision) {
+        const divName = product.division === 'print_shop' ? 'Print Shop' : 'Book Shop';
+        res.status(400);
+        throw new Error(`Product "${product.name}" belongs to ${divName} and cannot be billed under ${targetDivision === 'book_shop' ? 'Book Shop' : 'Print Shop'}`);
+    }
+
+    let availableStock = 0;
+    if (warehouseId) {
+        try {
+            const StockItem = mongoose.model('StockItem');
+            const stockItem = await StockItem.findOne({
+                productId: product._id,
+                warehouseId,
+                batchNumber: null,
+            });
+            if (stockItem) {
+                availableStock = Math.max(0, (stockItem.quantities?.onHand || 0) - (stockItem.quantities?.reserved || 0));
+            }
+        } catch (err) {
+            console.error('Error fetching stock for barcode product:', err);
+        }
+    }
+
+    res.json({
+        success: true,
+        data: {
+            _id: product._id,
+            name: product.name,
+            productCode: product.productCode,
+            barcode: product.barcode,
+            sku: product.sku,
+            basePrice: product.basePrice,
+            unitOfMeasure: product.unitOfMeasure,
+            division: product.division,
+            availableStock,
+            taxRate: product.tax?.taxRate || 0,
+            taxable: product.tax?.taxable ?? false,
+            tierPricing: product.tierPricing || [],
+            category: product.categoryId?.name,
+            status: product.status,
+        },
+    });
 });
 
 export const deleteProduct = asyncHandler(async (req, res) => {

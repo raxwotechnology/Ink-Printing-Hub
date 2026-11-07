@@ -392,6 +392,120 @@ export const getInvoiceById = asyncHandler(async (req, res) => {
 });
 
 /**
+ * PUT /api/invoices/:id
+ * Update existing manual or pending invoice
+ */
+export const updateInvoice = asyncHandler(async (req, res) => {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+        res.status(404);
+        throw new Error('Invoice not found');
+    }
+
+    if (['cancelled', 'void'].includes(invoice.status)) {
+        res.status(400);
+        throw new Error(`Cannot edit an invoice that is ${invoice.status}`);
+    }
+
+    const {
+        customerId,
+        division,
+        items,
+        invoiceDate,
+        dueDate,
+        invoiceType,
+        orderDiscount,
+        shippingCost,
+        otherCharges,
+        notes,
+        internalNotes,
+        paymentInstructions,
+        termsAndConditions,
+        status,
+    } = req.body;
+
+    let oldCustomerId = null;
+    if (customerId && customerId.toString() !== invoice.customerId.toString()) {
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            res.status(404);
+            throw new Error('Customer not found');
+        }
+        oldCustomerId = invoice.customerId;
+        invoice.customerId = customer._id;
+        invoice.customerSnapshot = {
+            name: customer.displayName,
+            code: customer.customerCode,
+            taxRegistrationNumber: customer.taxRegistrationNumber,
+            contactName: customer.primaryContact?.name,
+            phone: customer.primaryContact?.phone,
+        };
+        invoice.billingAddress = customer.billingAddress;
+        invoice.shippingAddress = customer.shippingAddresses?.find((a) => a.isDefault) || customer.billingAddress;
+        invoice.salesRepId = customer.assignedSalesRep;
+    }
+
+    if (division && division !== invoice.division) {
+        invoice.division = division;
+        const settings = await CompanySettings.findOne();
+        const divConfig = settings?.divisions?.[division] || {
+            name: division === 'print_shop' ? 'Ink Printing Hub (pvt) Ltd' : 'Pothmela Book Shop',
+            address: settings?.address || '',
+            phone: settings?.phone || '',
+            email: settings?.email || '',
+            taxRegistrationNumber: settings?.taxRegistrationNumber || '',
+            receiptFooterMessage: division === 'print_shop'
+                ? 'THANK YOU FOR YOUR PRINTING ORDER!\nPLEASE VISIT AGAIN.'
+                : 'THANK YOU FOR SHOPPING AT POTHMELA!\nPLEASE VISIT AGAIN.',
+            logoUrl: settings?.divisions?.[division]?.logoUrl || settings?.logoUrl || '',
+            tagline: division === 'print_shop'
+                ? 'PREMIUM QUALITY PRINTING & BRANDING SOLUTIONS'
+                : 'YOUR TRUSTED BOOKSTORE & STATIONERY HUB',
+        };
+        invoice.divisionSnapshot = divConfig;
+    }
+
+    if (items) invoice.items = items;
+    if (invoiceDate) invoice.invoiceDate = new Date(invoiceDate);
+    if (dueDate !== undefined) invoice.dueDate = dueDate ? new Date(dueDate) : undefined;
+    if (invoiceType) invoice.invoiceType = invoiceType;
+    if (orderDiscount !== undefined) invoice.orderDiscount = orderDiscount;
+    if (shippingCost !== undefined) invoice.shippingCost = Number(shippingCost) || 0;
+    if (otherCharges !== undefined) invoice.otherCharges = Number(otherCharges) || 0;
+    if (notes !== undefined) invoice.notes = notes;
+    if (internalNotes !== undefined) invoice.internalNotes = internalNotes;
+    if (paymentInstructions !== undefined) invoice.paymentInstructions = paymentInstructions;
+    if (termsAndConditions !== undefined) invoice.termsAndConditions = termsAndConditions;
+    if (status && ['draft', 'approved'].includes(status) && invoice.status === 'draft') {
+        invoice.status = status;
+    }
+
+    invoice.updatedBy = req.user._id;
+
+    // Save triggers pre('save') to recalculate subtotal, discounts, taxes, grandTotal, and balanceDue
+    await invoice.save();
+
+    // Update customer balances
+    await updateCustomerBalance(invoice.customerId);
+    if (oldCustomerId) {
+        await updateCustomerBalance(oldCustomerId);
+    }
+
+    const populated = await Invoice.findById(invoice._id)
+        .populate('customerId', 'displayName customerCode taxRegistrationNumber primaryContact paymentTerms creditStatus')
+        .populate('salesOrderIds', 'orderNumber orderDate')
+        .populate('salesRepId', 'firstName lastName')
+        .populate('createdBy', 'firstName lastName')
+        .populate('updatedBy', 'firstName lastName');
+
+    res.json({
+        success: true,
+        message: 'Invoice updated successfully',
+        data: populated,
+    });
+});
+
+/**
  * GET /api/invoices/aging/summary
  * Accounts receivable aging summary
  */

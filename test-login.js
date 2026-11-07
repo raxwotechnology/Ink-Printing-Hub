@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const PORT = process.env.PORT || 5005;
+
 const testLogin = async () => {
     try {
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
+        const response = await axios.post(`http://localhost:${PORT}/api/auth/login`, {
             email: 'admin@admin.com',
             password: 'password123'
         });

@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-    createInvoice, createFromSalesOrder, getInvoices, getInvoiceById,
+    createInvoice, createFromSalesOrder, getInvoices, getInvoiceById, updateInvoice,
     getAgingSummary, changeInvoiceStatus, deleteInvoice, getInvoicePrintJson,
 } from '../controllers/invoiceController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
@@ -37,6 +37,11 @@ router.post(
 router
     .route('/:id')
     .get(getInvoiceById)
+    .put(
+        authorize('admin', 'manager', 'accountant', 'sales_manager'),
+        validate(updateInvoiceSchema),
+        updateInvoice
+    )
     .delete(authorize('admin', 'manager', 'accountant'), deleteInvoice);
 
 router.patch(

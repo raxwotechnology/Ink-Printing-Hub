@@ -21,10 +21,16 @@ const invoiceLineSchema = z.object({
 export const createInvoiceSchema = z.object({
     customerId: objectId,
     invoiceType: z.enum(['standard', 'proforma', 'service']).optional(),
+    division: z.enum(['print_shop', 'book_shop']).optional(),
     salesOrderIds: z.array(objectId).optional(),
     invoiceDate: z.string().optional(),
     dueDate: z.string().optional(),
+    currency: z.string().optional(),
     items: z.array(invoiceLineSchema).min(1),
+    orderDiscount: z.object({
+        type: z.enum(['percentage', 'fixed']),
+        value: z.coerce.number().min(0),
+    }).optional(),
     shippingCost: z.coerce.number().min(0).optional(),
     otherCharges: z.coerce.number().min(0).optional(),
     notes: z.string().optional(),

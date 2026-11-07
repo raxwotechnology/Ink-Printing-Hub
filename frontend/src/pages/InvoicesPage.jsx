@@ -28,7 +28,7 @@ export default function InvoicesPage() {
     const canCreate = ['admin', 'manager', 'accountant', 'sales_manager'].includes(user?.role);
 
     const [filters, setFilters] = useState({
-        search: '', paymentStatus: '', agingBucket: '',
+        search: '', paymentStatus: '', division: 'all', agingBucket: '',
         page: 1, limit: 15,
     });
 
@@ -56,6 +56,14 @@ export default function InvoicesPage() {
                     <p className="font-medium">{r.customerSnapshot?.name}</p>
                     <p className="text-xs text-gray-500">{r.customerSnapshot?.code}</p>
                 </div>
+            ),
+        },
+        {
+            key: 'division', label: 'Division',
+            render: (r) => (
+                <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                    {r.division === 'print_shop' ? 'Print Shop' : 'Book Shop'}
+                </span>
             ),
         },
         {
@@ -143,6 +151,7 @@ export default function InvoicesPage() {
                     <div className="w-48">
                         <Select placeholder="All Statuses"
                             options={[
+                                { value: '', label: 'All Statuses' },
                                 { value: 'unpaid', label: 'Unpaid' },
                                 { value: 'partially_paid', label: 'Partially Paid' },
                                 { value: 'paid', label: 'Paid' },
@@ -151,6 +160,16 @@ export default function InvoicesPage() {
                             ]}
                             value={filters.paymentStatus}
                             onChange={(e) => setFilters((f) => ({ ...f, paymentStatus: e.target.value, page: 1 }))} />
+                    </div>
+                    <div className="w-44">
+                        <Select placeholder="All Divisions"
+                            options={[
+                                { value: 'all', label: 'All Divisions' },
+                                { value: 'print_shop', label: 'Print Shop' },
+                                { value: 'book_shop', label: 'Book Shop' },
+                            ]}
+                            value={filters.division}
+                            onChange={(e) => setFilters((f) => ({ ...f, division: e.target.value, page: 1 }))} />
                     </div>
                     {filters.agingBucket && (
                         <Button variant="outline" size="sm" onClick={() => setFilters((f) => ({ ...f, agingBucket: '', page: 1 }))}>

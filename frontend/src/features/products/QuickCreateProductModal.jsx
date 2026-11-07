@@ -26,6 +26,7 @@ export default function QuickCreateProductModal({
         productType: defaultProductType,
         categoryId: '',
         unitOfMeasure: 'pcs',
+        barcode: '',
         basePrice: 0,
         purchasePrice: 0,
         canBeSold: defaultProductType !== 'raw_material',
@@ -49,6 +50,7 @@ export default function QuickCreateProductModal({
                 productType: form.productType,
                 categoryId: form.categoryId || undefined,
                 unitOfMeasure: form.unitOfMeasure,
+                barcode: form.barcode?.trim() || undefined,
                 basePrice: +form.basePrice || 0,
                 costs: {
                     lastPurchaseCost: +form.purchasePrice || 0,
@@ -83,6 +85,10 @@ export default function QuickCreateProductModal({
                 <Input label="Product Name" required placeholder="e.g., Sugar 1kg"
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+
+                <Input label="Barcode / EAN (Optional)" placeholder="Scan or enter barcode"
+                    value={form.barcode}
+                    onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value }))} />
 
                 <Select
                     label="Business Division"

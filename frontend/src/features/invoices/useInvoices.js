@@ -29,6 +29,22 @@ export const useCreateInvoice = () => {
     });
 };
 
+export const useUpdateInvoice = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }) => invoicesApi.update(id, data),
+        onSuccess: (_, variables) => {
+            qc.invalidateQueries({ queryKey: ['invoices'] });
+            qc.invalidateQueries({ queryKey: ['invoicesAging'] });
+            qc.invalidateQueries({ queryKey: ['invoice', variables.id] });
+            qc.invalidateQueries({ queryKey: ['customers'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
+            toast.success('Invoice updated successfully');
+        },
+        onError: (err) => toast.error(err.response?.data?.message || 'Failed to update invoice'),
+    });
+};
+
 export const useGenerateFromSO = () => {
     const qc = useQueryClient();
     return useMutation({

@@ -8,5 +8,6 @@ router.use(protect);
 router.use(authorize('admin', 'manager', 'accountant'));
 
 router.get('/profit-and-loss', getProfitAndLoss);
+router.get('/pnl', getProfitAndLoss);
 
 export default router;

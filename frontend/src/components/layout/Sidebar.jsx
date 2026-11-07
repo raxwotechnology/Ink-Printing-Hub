@@ -35,6 +35,7 @@ const menuItems = [
             { label: 'POS Terminal', path: '/pos' },
             { label: 'POS Registers', path: '/pos-sessions' },
             { label: 'Sales Orders', path: '/sales-orders' },
+            { label: 'Quotations', path: '/quotations' },
             { label: 'Invoices', path: '/invoices' },
             { label: 'Payments Received', path: '/payments' },
             { label: 'Customer Returns', path: '/returns' },
@@ -164,6 +165,7 @@ export default function Sidebar({ userRole, isOpen, onClose }) {
     }, []);
 
     const newActions = [
+        { label: 'New Quotation', path: '/quotations/new', icon: FileText },
         { label: 'New Invoice', path: '/invoices/new', icon: Receipt },
         { label: 'New Sales Order', path: '/sales-orders/new', icon: ShoppingCart },
         { label: 'New GRN', path: '/grns', icon: PackageCheck },

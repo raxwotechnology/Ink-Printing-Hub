@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Ban, Printer, Receipt, FileText } from 'lucide-react';
+import { ArrowLeft, Send, Ban, Printer, Receipt, FileText, Edit } from 'lucide-react';
 
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
@@ -54,8 +54,9 @@ export default function InvoiceDetailPage() {
 
     if (isLoading || !inv) return <div className="py-16 text-center text-gray-500">Loading...</div>;
 
-    const canCancel = ['admin', 'manager', 'accountant'].includes(user.role);
-    const canSend = ['admin', 'manager', 'accountant', 'sales_manager'].includes(user.role);
+    const canCancel = ['admin', 'manager', 'accountant'].includes(user?.role);
+    const canSend = ['admin', 'manager', 'accountant', 'sales_manager'].includes(user?.role);
+    const canEdit = ['admin', 'manager', 'accountant', 'sales_manager'].includes(user?.role);
 
     const actions = [];
     if (inv.status === 'approved' && canSend) {
@@ -114,11 +115,13 @@ export default function InvoiceDetailPage() {
                         <Button variant="outline" onClick={() => navigate('/invoices')}>
                             <ArrowLeft size={16} className="mr-1.5" /> Back
                         </Button>
-                        <Button variant="primary" onClick={() => handlePrint('a4-invoice')} className="bg-slate-900 hover:bg-slate-800 text-white">
-                            <Printer size={16} className="mr-1.5" /> Print Tax Invoice (A4)
-                        </Button>
-                        <Button variant="outline" onClick={() => handlePrint('a4-quotation')} className="text-amber-800 border-amber-300 hover:bg-amber-50">
-                            <FileText size={16} className="mr-1.5 text-amber-700" /> Print Quotation (A4)
+                        {canEdit && !['cancelled', 'void'].includes(inv.status) && (
+                            <Button variant="outline" onClick={() => navigate(`/invoices/${inv._id}/edit`)}>
+                                <Edit size={16} className="mr-1.5" /> Edit Invoice
+                            </Button>
+                        )}
+                        <Button variant="primary" onClick={() => handlePrint('a4')} className="bg-slate-900 hover:bg-slate-800 text-white">
+                            <Printer size={16} className="mr-1.5" /> Print Invoice (A4)
                         </Button>
                         <Button variant="outline" onClick={() => handlePrint('thermal')} className="text-gray-700">
                             <Receipt size={16} className="mr-1.5" /> POS Receipt (80mm)
@@ -349,14 +352,7 @@ export default function InvoiceDetailPage() {
             />
 
             <div className="hidden print:block">
-                {printFormat === 'a4-quotation' ? (
-                    <PrintableInvoice
-                        ref={printRef}
-                        invoice={inv}
-                        payments={payments}
-                        documentType="quotation"
-                    />
-                ) : printFormat === 'thermal' ? (
+                {printFormat === 'thermal' ? (
                     <ThermalReceipt
                         ref={printRef}
                         invoice={inv}
@@ -367,7 +363,6 @@ export default function InvoiceDetailPage() {
                         ref={printRef}
                         invoice={inv}
                         payments={payments}
-                        documentType="invoice"
                     />
                 )}
             </div>

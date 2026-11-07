@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
     Search, Plus, Minus, Trash2, ShoppingCart, Save, X,
     Package, AlertCircle, UserPlus, PackagePlus, CreditCard,
-    CheckCircle, ArrowLeft, LayoutGrid, List, Landmark, Banknote, FileText
+    CheckCircle, ArrowLeft, LayoutGrid, List, Landmark, Banknote, FileText,
+    ScanBarcode, Barcode
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -64,6 +65,42 @@ export default function PosPage() {
     const [orderDiscountPercent, setOrderDiscountPercent] = useState(0);
     const [orderDiscountAmount, setOrderDiscountAmount] = useState(0);
     const createCustomer = useCreateCustomer();
+
+    // Barcode Scanner state
+    const [barcodeInput, setBarcodeInput] = useState('');
+    const [isScanning, setIsScanning] = useState(false);
+    const barcodeInputRef = useRef(null);
+
+    // Audio feedback synthesizer for scanner
+    const playScanSound = (type = 'success') => {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.08);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(320, ctx.currentTime);
+                gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.16);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.16);
+            }
+        } catch {
+            // Audio context not allowed or unsupported
+        }
+    };
 
     // Modals
     const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -226,7 +263,7 @@ export default function PosPage() {
                     price = price * (1 - selectedCustomer.defaultDiscountPercent / 100);
                 }
                 return prev.map((i) => i.productId === product._id
-                    ? { ...i, qty: newQty, price: +price.toFixed(2), tierPricing: product.tierPricing } : i);
+                    ? { ...i, qty: newQty, price: +price.toFixed(2), tierPricing: product.tierPricing, barcode: product.barcode || i.barcode } : i);
             }
 
             const tierPrice = getTierPrice(product, 1);
@@ -239,6 +276,7 @@ export default function PosPage() {
                 productId: product._id,
                 name: product.name,
                 code: product.productCode,
+                barcode: product.barcode,
                 price: +price.toFixed(2),
                 qty: 1,
                 available,
@@ -294,6 +332,103 @@ export default function PosPage() {
         if (cart.length === 0) return;
         if (window.confirm('Clear all items?')) setCart([]);
     };
+
+    // Dedicated Barcode Scanner handler
+    const handleBarcodeSubmit = async (e) => {
+        if (e) e.preventDefault();
+        const code = barcodeInput.trim();
+        if (!code || isScanning) return;
+
+        if (!sourceWarehouseId) {
+            toast.error('Please select a warehouse first');
+            barcodeInputRef.current?.focus();
+            return;
+        }
+
+        setIsScanning(true);
+        try {
+            const res = await productsApi.getByBarcode(code, {
+                warehouseId: sourceWarehouseId,
+                division: activeDivision,
+            });
+
+            const product = res.data;
+            if (!product) {
+                playScanSound('error');
+                toast.error(`Barcode "${code}" not found`);
+                return;
+            }
+
+            const available = product.availableStock ?? 0;
+            if (available <= 0) {
+                playScanSound('error');
+                toast.error(`"${product.name}" is out of stock at this warehouse`);
+                return;
+            }
+
+            setCart((prev) => {
+                const existing = prev.find((i) => i.productId === product._id);
+                if (existing) {
+                    if (existing.qty >= available) {
+                        playScanSound('error');
+                        toast.error(`Only ${available} available in stock for "${product.name}"`);
+                        return prev;
+                    }
+                    const newQty = existing.qty + 1;
+                    const tierPrice = getTierPrice(product, newQty);
+                    let price = tierPrice;
+                    if (selectedCustomer?.defaultDiscountPercent) {
+                        price = price * (1 - selectedCustomer.defaultDiscountPercent / 100);
+                    }
+                    playScanSound('success');
+                    toast.success(`Incremented: ${product.name} (Qty: ${newQty})`, { id: 'scan-toast', duration: 1500 });
+                    return prev.map((i) =>
+                        i.productId === product._id
+                            ? { ...i, qty: newQty, price: +price.toFixed(2), tierPricing: product.tierPricing, barcode: product.barcode || i.barcode }
+                            : i
+                    );
+                }
+
+                const tierPrice = getTierPrice(product, 1);
+                let price = tierPrice;
+                if (selectedCustomer?.defaultDiscountPercent) {
+                    price = price * (1 - selectedCustomer.defaultDiscountPercent / 100);
+                }
+                playScanSound('success');
+                toast.success(`Added: ${product.name} (Qty: 1)`, { id: 'scan-toast', duration: 1500 });
+                return [
+                    ...prev,
+                    {
+                        productId: product._id,
+                        name: product.name,
+                        code: product.productCode,
+                        barcode: product.barcode,
+                        price: +price.toFixed(2),
+                        qty: 1,
+                        available,
+                        unitOfMeasure: product.unitOfMeasure,
+                        tierPricing: product.tierPricing || [],
+                        basePrice: product.basePrice,
+                    },
+                ];
+            });
+        } catch (err) {
+            playScanSound('error');
+            const msg = err.response?.data?.message || err.message || `Barcode "${code}" not found`;
+            toast.error(msg);
+        } finally {
+            setIsScanning(false);
+            setBarcodeInput('');
+            setTimeout(() => {
+                barcodeInputRef.current?.focus();
+            }, 60);
+        }
+    };
+
+    // Auto-focus barcode scanner input
+    useEffect(() => {
+        barcodeInputRef.current?.focus();
+    }, [sourceWarehouseId, activeDivision]);
 
     // Totals
     const totals = useMemo(() => {
@@ -577,13 +712,59 @@ export default function PosPage() {
 
                 {/* Left: Product catalog */}
                 <div className="flex-1 flex flex-col bg-gray-50 p-4 overflow-hidden flex">
+                    {/* Barcode Scanner Box */}
+                    <form onSubmit={handleBarcodeSubmit} className="mb-3">
+                        <div className="relative flex items-center">
+                            <div className="absolute left-3.5 flex items-center pointer-events-none text-emerald-600">
+                                <ScanBarcode size={20} />
+                            </div>
+                            <input
+                                ref={barcodeInputRef}
+                                type="text"
+                                value={barcodeInput}
+                                onChange={(e) => setBarcodeInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleBarcodeSubmit(e);
+                                    }
+                                }}
+                                placeholder="Scan Book Shop Barcode (USB Scanner ready) or enter manually..."
+                                className="w-full pl-11 pr-24 py-2.5 bg-emerald-50/50 border-2 border-emerald-400 rounded-xl text-sm font-mono placeholder:font-sans placeholder:text-gray-400 focus:outline-none focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-100 transition-all shadow-sm"
+                                autoComplete="off"
+                                disabled={isScanning}
+                            />
+                            <div className="absolute right-2 flex items-center gap-1.5">
+                                {isScanning && (
+                                    <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-1" />
+                                )}
+                                {barcodeInput && !isScanning && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { setBarcodeInput(''); barcodeInputRef.current?.focus(); }}
+                                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={!barcodeInput.trim() || isScanning}
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold disabled:opacity-40 transition-all flex items-center gap-1 shadow-sm"
+                                >
+                                    Scan
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
                     {/* Search */}
                     <div className="flex gap-2 mb-3">
                         <div className="relative flex-1">
                             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search products..."
+                                placeholder="Search products by name, code or barcode..."
                                 className="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none border-gray-200"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -757,7 +938,14 @@ export default function PosPage() {
                                     <div className="flex items-start justify-between mb-2">
                                         <div className="flex-1 min-w-0 pr-2">
                                             <p className="text-sm font-bold text-gray-900 break-words leading-tight">{item.name}</p>
-                                            <p className="text-[10px] text-gray-500 font-mono mt-0.5">{item.code}</p>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <span className="text-[10px] text-gray-500 font-mono">{item.code}</span>
+                                                {item.barcode && (
+                                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-mono bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
+                                                        🏷️ {item.barcode}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <button onClick={() => removeFromCart(item.productId)}
                                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0">

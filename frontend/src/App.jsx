@@ -34,6 +34,9 @@ import InvoicesPage from './pages/InvoicesPage';
 import InvoiceFromSalesOrderPage from './pages/InvoiceFromSalesOrderPage';
 import InvoiceFormPage from './pages/InvoiceFormPage';
 import InvoiceDetailPage from './pages/InvoiceDetailPage';
+import QuotationsPage from './pages/QuotationsPage';
+import QuotationFormPage from './pages/QuotationFormPage';
+import QuotationDetailPage from './pages/QuotationDetailPage';
 import BillsPage from './pages/BillsPage';
 import BillDetailPage from './pages/BillDetailPage';
 import BillFromGrnPage from './pages/BillFromGrnPage';
@@ -152,6 +155,11 @@ function App() {
         <Route path="/invoices/new" element={<InvoiceFormPage />} />
         <Route path="/invoices/from-sales-order" element={<InvoiceFromSalesOrderPage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
+        <Route path="/invoices/:id/edit" element={<InvoiceFormPage />} />
+        <Route path="/quotations" element={<QuotationsPage />} />
+        <Route path="/quotations/new" element={<QuotationFormPage />} />
+        <Route path="/quotations/:id" element={<QuotationDetailPage />} />
+        <Route path="/quotations/:id/edit" element={<QuotationFormPage />} />
         <Route path="/grns" element={<GrnsPage />} />
         <Route path="/bills" element={<BillsPage />} />
         <Route path="/bills/from-grn" element={<BillFromGrnPage />} />
